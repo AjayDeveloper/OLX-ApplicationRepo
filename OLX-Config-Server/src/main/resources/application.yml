@@ -1,0 +1,15 @@
+server:
+  port: 8888
+  
+spring:
+  application:
+    name: configuration-server
+  cloud:
+    config:
+      server:
+        git:
+          uri: https://github.com/AjayDeveloper/olxConfig
+          default-label: main
+          username: AjayDeveloper
+          password: Suck@9dick
+          clone-on-start: true
