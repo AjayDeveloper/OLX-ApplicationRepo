@@ -11,5 +11,5 @@ spring:
           uri: https://github.com/AjayDeveloper/olxConfig
           default-label: main
           username: AjayDeveloper
-          password: Suck@9dick
+          password: 
           clone-on-start: true
