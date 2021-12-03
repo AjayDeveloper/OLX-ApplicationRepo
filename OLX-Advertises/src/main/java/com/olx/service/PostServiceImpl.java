@@ -1,11 +1,16 @@
 package com.olx.service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.olx.dto.Advertises;
@@ -13,6 +18,8 @@ import com.olx.entity.PostEntity;
 import com.olx.exception.InVaildAuthTokenException;
 import com.olx.exception.InvalidPostIdException;
 import com.olx.repository.PostRepository;
+import com.olx.repository.SearchCriteriaSpecification;
+import com.olx.util.AdvertiseConverterUtil;
 
 @Service
 public class PostServiceImpl implements PostService {
@@ -25,6 +32,10 @@ public class PostServiceImpl implements PostService {
 
 	@Autowired
 	LoginDelegate loginDelegate;
+	
+	
+	@Autowired
+	MasterDataDelegate masterDataDelegate;
 
 	@Override
 	public Advertises createNewPost(String authToken, Advertises advertises) {
@@ -87,7 +98,7 @@ public class PostServiceImpl implements PostService {
 	}
 
 	@Override
-	public Advertises getAllAdvertisementsPostByUserId(String authToken,int id) {
+	public Advertises getAllAdvertisementsPostByUserId(String authToken, int id) {
 		if (!loginDelegate.isValidateToken(authToken)) {
 			throw new InVaildAuthTokenException(authToken);
 		}
@@ -101,19 +112,18 @@ public class PostServiceImpl implements PostService {
 	}
 
 	@Override
-	public boolean deleteAdvertisementByPostId(String authToken,int id) {
+	public boolean deleteAdvertisementByPostId(String authToken, int id) {
 		if (!loginDelegate.isValidateToken(authToken)) {
 			throw new InVaildAuthTokenException(authToken);
 		}
 		Optional<PostEntity> opPostEntity = postRepository.findById(id);
-		if(opPostEntity.isPresent()) {
+		if (opPostEntity.isPresent()) {
 			postRepository.deleteById(id);
 			return true;
-		}else {
+		} else {
 			throw new InvalidPostIdException("" + id);
 		}
-		
-		
+
 	}
 
 	@Override
@@ -121,5 +131,36 @@ public class PostServiceImpl implements PostService {
 		List<PostEntity> postEntities = postRepository.findByTitle(title);
 		return getAdvertisesDtoList(postEntities);
 	}
+
+	@Override
+	public List<Advertises> searchAdvertisementBySearchCriteria(String searchText, int categoryId, String postedBy, String dateCondition, LocalDate onDate, LocalDate fromDate, LocalDate toDate, String sortBy, String sortOn, int startIndex, int records, int statusId) {
+		//System.out.println(searchText);
+		
+		
+		Sort sort;
+		if (sortBy.equalsIgnoreCase("asc")) {
+		sort = Sort.by(Sort.Direction.ASC, sortOn);
+		} else {
+		sort = Sort.by(Sort.Direction.DESC, sortOn);
+		}
+
+		Pageable pageWithFewRecords = PageRequest.of(startIndex, records, sort);
+
+		SearchCriteriaSpecification spec1 = new SearchCriteriaSpecification(
+		searchText,
+		categoryId,
+		postedBy,
+		dateCondition,
+		onDate,
+		fromDate,
+		toDate,
+		statusId
+		);
+		Page<PostEntity> advertiseEntities = postRepository.findAll(spec1, pageWithFewRecords);
+
+		return AdvertiseConverterUtil.convertEntityToDto(modelMapper, advertiseEntities.getContent());
+	}
+
+	
 
 }

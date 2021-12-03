@@ -29,12 +29,14 @@ public class Advertises {
     private String status;
     @ApiModelProperty(value="Advertise's category")
 	private String category;
+    @ApiModelProperty(value="Advertise's posted_by")
+    private String posted_by;
+    @ApiModelProperty(value = "Username of a user who has posted the advertise")
+    private String username;
+
 	
-
-
-	public void setCategoryId(int categoryId) {
-		this.categoryId = categoryId;
-	}
+	 public void setCategoryId(int categoryId) { this.categoryId = categoryId; }
+	 
 	
 	
 }

@@ -2,6 +2,8 @@ package com.olx.controller;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.WebRequest;
 
@@ -22,6 +25,9 @@ import com.olx.dto.Advertises;
 import com.olx.exception.InvalidPostIdException;
 import com.olx.service.MasterDataDelegate;
 import com.olx.service.PostService;
+import com.olx.util.DateUtils;
+
+import io.swagger.annotations.ApiOperation;
 
 @RestController
 @RequestMapping(value = "/olx/advertise")
@@ -32,6 +38,8 @@ public class AdvertisesController {
 
 	@Autowired
 	MasterDataDelegate masterDataDelegate;
+	
+	private static final Logger logger = LoggerFactory.getLogger(AdvertisesController.class);
 
 	@ExceptionHandler(value = { InvalidPostIdException.class })
 	public ResponseEntity<Object> handleInvalidPostIdException(RuntimeException exception, WebRequest request) {
@@ -82,7 +90,7 @@ public class AdvertisesController {
 			@RequestHeader("auth-token") String authToken) {
 
 		System.out.println("AUTH-TOKEN - " + authToken);
-		return new ResponseEntity(serivce.getAllAdvertisementsPostByUserId(authToken,id), HttpStatus.OK);
+		return new ResponseEntity(serivce.getAllAdvertisementsPostByUserId(authToken, id), HttpStatus.OK);
 
 	}
 
@@ -91,7 +99,7 @@ public class AdvertisesController {
 			@RequestHeader("auth-token") String authToken) {
 
 		System.out.println("AUTH-TOKEN - " + authToken);
-		return new ResponseEntity(serivce.deleteAdvertisementByPostId(authToken,Id), HttpStatus.OK);
+		return new ResponseEntity(serivce.deleteAdvertisementByPostId(authToken, Id), HttpStatus.OK);
 	}
 
 	// baseUrlChange
@@ -101,4 +109,44 @@ public class AdvertisesController {
 		return new ResponseEntity(serivce.findByTitle(name), HttpStatus.OK);
 	}
 
+	@ApiOperation(value = "Search for an advertise filtered by different search criteria")
+	@GetMapping(value = "/search/filtercriteria", produces = { MediaType.APPLICATION_JSON_VALUE,
+					MediaType.APPLICATION_XML_VALUE })
+	public ResponseEntity<List<Advertises>> searchAdvertisementBySearchCriteria(
+			
+			@RequestParam(value = "searchText",required =false) String searchText,
+			@RequestParam(value = "category", defaultValue = "3", required = false) int categoryId,
+			@RequestParam(value = "postedBy", required = false) String postedBy,
+			@RequestParam(value = "dateCondition", required = false) String dateCondition,
+			@RequestParam(value = "onDate", required = false) String onDate,
+			@RequestParam(value = "fromDate", required = false) String fromDate,
+			@RequestParam(value = "toDate", required = false) String toDate,
+			@RequestParam(value = "sortBy", defaultValue = "asc", required = false) String sortBy,
+			@RequestParam(value = "sortOn", defaultValue = "modifiedDate", required = false) String sortOn,
+			@RequestParam(value = "startIndex", defaultValue = "0", required = false) int startIndex,
+			@RequestParam(value = "records", defaultValue = "10", required = false) int records,
+			@RequestParam(value = "status", defaultValue = "1", required = false) int statusId
+			
+			) {
+		 
+		  logger.info("ACCOUNT METHOD CALLED");
+		return new ResponseEntity<List<Advertises>>(
+				serivce.searchAdvertisementBySearchCriteria(searchText,
+						categoryId,
+						postedBy,
+						dateCondition,
+						onDate == null ? null : DateUtils.convertStringToDate(onDate, DateUtils.DATE_FORMAT_YYYY_MM_DD),
+						fromDate == null ? null : DateUtils.convertStringToDate(fromDate, DateUtils.DATE_FORMAT_YYYY_MM_DD),
+						toDate == null ? null : DateUtils.convertStringToDate(toDate, DateUtils.DATE_FORMAT_YYYY_MM_DD),
+						sortBy,
+						sortOn,
+						startIndex,
+						records,
+						statusId),
+				HttpStatus.OK);
+	}
+
+	
+	
+	
 }
